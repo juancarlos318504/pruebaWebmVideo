@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FotografiAR</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.js"></script>
+    <script src="http://hongru.github.io/proj/canvas2image/canvas2image.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+    
+    <style>
+
+        .o-loader {
+            height: 100vh;
+            width: 100vw;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-color: rgba(0, 0, 0, 0.95);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+  
+        .video-wrap{
+            width: 100vw;
+            height: 100vh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            padding: 1em; 
+            background-color: teal;
+        }
+
+        .o-video{
+          align-self: flex-start;
+          justify-self: center;
+          max-width: 90%;
+          height: 90%;
+          position: absolute;
+        }
+
+        #video{
+            transform: rotateY(180deg);
+            -webkit-transform:rotateY(180deg); /* Safari and Chrome */
+            -moz-transform:rotateY(180deg); /* Firefox */
+        }
+
+        #montaje{
+            z-index: 1000;
+        }
+
+        .o-logo-container{
+            width: 80%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        #logo{
+            
+            height: 30%;
+        }
+
+        .o-start-button{
+            width: 10em;
+            height: 10em;
+            border-radius: 50%;
+        }
+
+        #container-button{
+            position: absolute;
+            width: 80%; 
+            height: 90%; 
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        #snap{
+            background-color: #f78f1e;
+            margin: 2em;
+            width: 7em;
+            height: 7em;
+            border-radius: 50%;
+            color: white;
+            font-weight: bolder;
+            font-size: 1.1em;
+            z-index: 3000;
+        }
+
+        #timer{
+            position: absolute;
+            width: 90%;
+            height: 90%;
+            text-align: center;
+            align-self: center;
+            color: white;
+            font-size: 10rem;
+            font-weight: bolder;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        #warning{
+            text-align: center; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            vertical-align: middle; 
+            height: 100vh; 
+            padding: 2em; 
+            font-size: 1.5em;
+        }
+
+        #canvas{
+            display: none;
+        }
+
+        @media (max-width: 1000px) {
+            #timer {
+                font-size: 3rem;
+            }
+        }
+
+        @media screen and (orientation:landscape) {
+            #application{
+                display: block;
+            }
+            #warning{
+                display: none;
+            }
+        }
+
+        @media screen and (orientation:portrait) {
+            #application{
+                display: none;
+            }
+
+            #warning{
+                display: block;
+            }
+        }
+    </style>
+
+</head>
+
+<body style="margin: 0; padding: 0;  width: 100vw; height: 100vh;">
+    <div style="width: 100%; height: 100%;" id="application">
+        <div class="o-loader" id="loader-landing">
+            <button id="button-start" type="button" class="btn btn-warning o-start-button">COMENZAR</button>
+        </div>
+    
+        
+    
+        <!-- Stream video via webcam -->
+        <div class="video-wrap" >
+            
+            <video muted loop class="o-video" id="montaje">
+                <source src="cobra1.webm" type="video/webm">
+                
+                Tu navegador no soporta el montaje :(
+            </video>
+
+            <video id="video" width="1280" height="720" playsinline autoplay class="o-video"></video>
+    
+            <div class="o-video o-logo-container" id="logo-container"><img id="logo" src="LogoUnicentro.png"/></div>
+            
+            <div id="timer"><div id="timer-count"></div></div>
+    
+            <div id="container-button" >
+                <button id="snap" class="btn btn-info"> Tomar foto</button>
+            </div>
+    
+            
+        </div>
+    
+        
+        <!-- Webcam video snapshot -->
+        <canvas id="canvas" width="1280" height="720" ></canvas>
+        <a id="link"></a>
+
+
+        <canvas id="canvas-montaje" width="1280" height="720" ></canvas>
+    </div>
+
+    <div id="warning" >
+        ¡ Por favor rota tu dispositivo horizontalmente !
+    </div>
+    
+</body>
+
+<!--<script type="text/javascript" src="webcam-easy.min.js"></script>-->
+<script  src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+<script>
+    var canv = document.getElementById('canvas-montaje');
+    var ct = canv.getContext('2d');
+    var vide = document.getElementById('montaje');
+
+    vide.addEventListener('play', function() {
+        var $this = this; //cache
+        (function loop() {
+        if (!$this.paused && !$this.ended) {
+            ct.clearRect(0, 0, canv.width, canv.height);
+            ct.drawImage($this, 0, 0);
+            setTimeout(loop, 1000 / 30); // drawing at 30fps
+        }
+        })();
+    }, 0);
+</script>
+
+<script type="text/javascript">
+    'use strict';
+
+    
+
+    const StartDiv = document.getElementById('loader-landing');
+    const StartButton = document.getElementById('button-start');
+    const montaje = document.getElementById("montaje");
+
+    //StartButton.setAttribute("disabled", "disabled");
+    StartButton.addEventListener("click", 
+        function() {
+            init1();
+            StartDiv.remove();
+            //document.getElementById("montaje").play();
+        }
+    );
+
+
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const snap = document.getElementById("snap");
+
+    const constraints = {
+        audio: false,
+        video: {
+            width: 1280, height: 720,
+        }
+    };
+
+    PermissionStatus.onchange = function() {
+        console.log("cambio");
+            location.reload();
+            /*Notification.requestPermission(function(result) {
+                if (result === 'denied') {
+                    alert('Permission wasn\'t granted. Allow a retry.');
+
+                    
+                    return;
+                } else if (result === 'default') {
+                    alert('The permission request was dismissed.');
+                    return;
+                }
+                // Hacer algo con el permiso concedido.
+            });*/
+        }
+
+    
+
+
+    // Access webcam
+    async function init1() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            handleSuccess(stream);
+            StartButton.removeAttribute("disabled");
+        } catch (e) {
+            //errorMsgElement.innerHTML = `navigator.getUserMedia error:${e.toString()}`;
+            console.log("An error occured! " + e);
+            alert('Es necesario que brindes acceso a la cámara de tu dispositivo para poder interactuar. Utiliza el ícono de candado que esta junto a la url para poder brindar los permisos necesarios.');
+        }
+    }
+
+    function init(){
+        /*if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            navigator.mediaDevices.getUserMedia (constraints)
+                .then(function(stream) {
+                    handleSuccess(stream);
+                    StartButton.removeAttribute("disabled");
+                })
+
+                // Error callback
+                .catch(function(err) {
+                    alert('Es necesario que brindes acceso a la cámara de tu dispositivo para poder interactuar. Utiliza el ícono de candado que esta junto a la url para poder brindar los permisos necesarios.');
+                }
+            );
+        } else {
+            alert('getUserMedia no es soportado en tu navegador!');
+        }*/
+
+        navigator.getMedia = ( navigator.getUserMedia ||
+                         navigator.webkitGetUserMedia ||
+                         navigator.mozGetUserMedia ||
+                         navigator.msGetUserMedia);
+
+        navigator.getMedia(
+            {
+                audio: false,
+                video: {
+                    width: 1280, height: 720
+                }               
+            },
+            function(stream) {
+            if (navigator.mozGetUserMedia) {
+                video.mozSrcObject = stream;
+                window.stream = stream;
+            } else {
+                var vendorURL = window.URL || window.webkitURL;
+                video.srcObject = stream;
+                window.stream = stream;
+            }
+            video.play();
+            },
+                function(err) {
+                console.log("An error occured! " + err);
+                alert('Es necesario que brindes acceso a la cámara de tu dispositivo para poder interactuar. Utiliza el ícono de candado que esta junto a la url para poder brindar los permisos necesarios.');
+            }
+        );
+
+        var streaming = false;
+        video.addEventListener('canplay', function(ev){
+            if (!streaming) {
+                var width = 1280;
+            var height = 720;
+            video.setAttribute('width', width);
+            video.setAttribute('height', height);
+            canvas.setAttribute('width', width);
+            canvas.setAttribute('height', height);
+            streaming = true;
+            }
+        }, false);
+    }
+
+
+    // Success
+    function handleSuccess(stream) {
+        window.stream = stream;
+        video.srcObject = stream;
+    }
+
+    // Load init
+    //init1();
+
+    /*const webcam = new Webcam(video, 'user', canvas, null);
+    webcam.start()
+    .then(result =>{
+        console.log("webcam started");
+    })
+    .catch(err => {
+        console.log(err);
+    });*/
+
+    const logo = document.getElementById("logo");
+    // Draw image
+    var context = canvas.getContext('2d');
+
+    snap.addEventListener("click", 
+        function() {
+            montaje.playbackRate = 1;
+            montaje.play();
+            var timer = document.getElementById("timer-count");
+            snap.setAttribute("disabled", "disabled");
+            timer.setAttribute("disabled", "disabled");
+            timer.innerHTML = 5;
+
+            var countdown = window.setInterval(function() {
+                var seconds = timer.innerHTML;
+                seconds = seconds - 1;
+                timer.innerHTML = seconds;
+
+                if (seconds == 0) {
+                    timer.innerHTML = "¡ Sonríe !";
+                    
+                    clearInterval(countdown);
+                    }
+            }, 1000);
+
+            window.setTimeout(function() {
+                context.translate(1280, 0);
+                context.scale(-1, 1);   
+                context.drawImage(video, 0,0, 1280, 720);
+                context.setTransform(1,0,0,1,0,0);
+                //document.getElementById("montaje").style.transform = "rotate(180deg)";
+                context.drawImage(montaje, 0, 0, 1280, 720);
+                context.drawImage(logo, 0, 500, 200, 200);
+
+                //console.log(canvas.toDataURL("image/png"));
+
+                var link = document.getElementById('link');
+                link.setAttribute('download', 'Foto.png');
+                link.setAttribute('href', canvas.toDataURL("image/png").replace("image/png", "image/octet-stream"));
+                link.click();
+
+                context.clearRect(0, 0, canvas.width, canvas.height);
+
+                window.setTimeout(function() {
+                    timer.innerHTML = "";
+                    
+                    //montaje.pause();
+                    /*var intervalRewind;
+                    intervalRewind = setInterval(function(){
+                        montaje.playbackRate = 1.0;
+                        if(montaje.currentTime == 0){
+                            clearInterval(intervalRewind);
+                            montaje.pause();
+                            timer.removeAttribute("disabled");
+                            snap.removeAttribute("disabled");
+                        }
+                        else{
+                            montaje.currentTime += -.1;
+                        }
+                    },100);*/
+                    
+                }, 1500);
+
+            }, 5000);
+
+
+
+            
+        }
+    );
+
+    
+</script>
+</html>
